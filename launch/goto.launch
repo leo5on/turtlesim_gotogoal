@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="turtlesim" type="turtlesim_node" name="turtle_bot" />
+    <node pkg="turtlesim_go" type="turtlesim_go_node" name="goto" output="screen"/>
+</launch>
