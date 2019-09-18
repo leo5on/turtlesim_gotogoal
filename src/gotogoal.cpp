@@ -1,3 +1,4 @@
+// includes necessarios pro codigo rodar
 #include "gotogoal.hpp"
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
@@ -8,10 +9,12 @@
 #include <iostream>
 #include <string>
 
+// namespace necessario para as funcoes cin e cout
 using namespace std;
 
+// instanciacao da classe Go declarada no header
 Go::Go(ros::NodeHandle& node, double tolerance): _Node(node), _accep(tolerance){
-
+    // valores iniciais e parametros dos callbacks
     _subPosition = _Node.subscribe("/turtle1/pose",1, &Go::subPoseCallback, this);
     _pubvel = _Node.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel", 1);
     _posegoal[0] = 5.544444561;
@@ -20,13 +23,14 @@ Go::Go(ros::NodeHandle& node, double tolerance): _Node(node), _accep(tolerance){
     _y = 0;
     
 }
-
+// callback do topico da posicao atual da tartaruga
 void Go::subPoseCallback(const turtlesim::Pose::ConstPtr& msg) {
 
     _pose[0] = msg->x;
     _pose[1] = msg->y;
     _pose[2] = msg->theta;
 }
+// funcao para pegar as coordenadas a partir de teclado
 void Go::getcoords() {
     cout << "digite a coordenada x do goal";
     cin >> _x;
@@ -36,14 +40,20 @@ void Go::getcoords() {
     _posegoal[1] = _y;  
     ROS_INFO("%f %f", _posegoal[0], _posegoal[1]);
 }   
-
+// funcao que faz os calculos e manda a tartaruga andar
 void Go::gotogoal(){
+    // variaveis e atributos
     geometry_msgs::Twist vel;
     double linearVelocity;
+    // calculo do angulo entre a posicao atual e o goal
     double angle =  atan2(_posegoal[1] - _pose[1], _posegoal[0] - _pose[0]);
+    // calculo do erro usado pra verificar a tolerancia
     double angle_error = angle - _pose[2];
+    // calculo da distancia euclidiana entre os pontos
     double target_distance = sqrt(pow(_posegoal[0] - _pose[0],2) + pow(_posegoal[1] - _pose[1],2));
+    // printa no terminal o erro calculado instantaneamente
     ROS_INFO("Erro: %f", target_distance);
+    // parametros pra evitar que a tartaruga fique virando loucamente
     if(angle_error > pi){
         angle_error -= 2*(pi);
         }
@@ -57,6 +67,7 @@ void Go::gotogoal(){
     else if (vel.angular.z < -.5){
         vel.angular.z = -.5;
     }
+    // verificacao se a tartaruga esta dentro da tolerancia
     if (target_distance > _accep){
         vel.linear.x = fabs(target_distance)*.5;
         if (vel.linear.x > 1){
@@ -66,7 +77,7 @@ void Go::gotogoal(){
     else{
         vel.linear.x = vel.angular.z = 0;
     }
-    
+    // ordem de publicacao pro movimento
     _pubvel.publish(vel);
 }
 
